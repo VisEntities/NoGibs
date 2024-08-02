@@ -13,7 +13,7 @@ using System.Reflection.Emit;
 namespace Oxide.Plugins
 {
     [Info("No Gibs", "VisEntities", "1.0.0")]
-    [Description("Prevents debris from spawning when entities decay, are killed by admins, demolished, or collapsed due to stability.")]
+    [Description("Prevents debris from spawning when entities decay, are killed by admins, demolished, or collapsed due to instability.")]
     public class NoGibs : RustPlugin
     {
         #region Fields

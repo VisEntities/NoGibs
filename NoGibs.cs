@@ -12,7 +12,7 @@ using System.Reflection.Emit;
 
 namespace Oxide.Plugins
 {
-    [Info("No Gibs", "VisEntities", "1.0.0")]
+    [Info("No Gibs", "VisEntities", "1.1.0")]
     [Description("Prevents debris from spawning when entities decay, are killed by admins, demolished, or collapsed due to instability.")]
     public class NoGibs : RustPlugin
     {
@@ -42,6 +42,9 @@ namespace Oxide.Plugins
 
             [JsonProperty("Disable Debris Spawn For Stability Collapse")]
             public bool DisableDebrisSpawnForStabilityCollapse { get; set; }
+
+            [JsonProperty("Disable Debris For Other Entity Types")]
+            public bool DisableDebrisForOtherEntityTypes { get; set; }
         }
 
         protected override void LoadConfig()
@@ -74,6 +77,12 @@ namespace Oxide.Plugins
             if (string.Compare(_config.Version, "1.0.0") < 0)
                 _config = defaultConfig;
 
+
+            if (string.Compare(_config.Version, "1.1.0") < 0)
+            {
+                _config.DisableDebrisForOtherEntityTypes = defaultConfig.DisableDebrisForOtherEntityTypes;
+            }
+
             PrintWarning("Config update complete! Updated from version " + _config.Version + " to " + Version.ToString());
             _config.Version = Version.ToString();
         }
@@ -86,7 +95,8 @@ namespace Oxide.Plugins
                 DisableDebrisSpawnForDecayingEntities = true,
                 DisableDebrisSpawnForAdminKills = true,
                 DisableDebrisSpawnForDemolishedStructures = true,
-                DisableDebrisSpawnForStabilityCollapse = true
+                DisableDebrisSpawnForStabilityCollapse = true,
+                DisableDebrisForOtherEntityTypes = true
             };
         }
 
@@ -115,7 +125,7 @@ namespace Oxide.Plugins
 
             if (!_config.DisableDebrisSpawnForAdminKills)
                 return null;
-
+   
             baseNetworkable.Kill(BaseNetworkable.DestroyMode.None);
             return true;
         }
@@ -127,7 +137,7 @@ namespace Oxide.Plugins
 
             if (!_config.DisableDebrisSpawnForDemolishedStructures)
                 return null;
-
+    
             stabilityEntity.Kill(BaseNetworkable.DestroyMode.None);
             return true;
         }
@@ -139,8 +149,20 @@ namespace Oxide.Plugins
 
             if (!_config.DisableDebrisSpawnForDecayingEntities)
                 return null;
-
+ 
             decayEntity.Kill(BaseNetworkable.DestroyMode.None);
+            return true;
+        }
+
+        private object OnBaseCombatEntityKilled(BaseCombatEntity baseCombatEntity, HitInfo info)
+        {
+            if (baseCombatEntity == null)
+                return null;
+
+            if (!_config.DisableDebrisForOtherEntityTypes)
+                return null;
+
+            baseCombatEntity.Kill(BaseNetworkable.DestroyMode.None);
             return true;
         }
 
@@ -148,6 +170,21 @@ namespace Oxide.Plugins
 
         #region Harmony Patches
 
+        [HarmonyPatch(typeof(BaseCombatEntity), "OnKilled")]
+        public static class BaseCombatEntity_OnKilled_Patch
+        {
+            public static bool Prefix(BaseCombatEntity __instance, HitInfo info)
+            {
+                if (Interface.CallHook("OnBaseCombatEntityKilled", __instance, info) != null)
+                {
+                    return false;
+                }
+
+                return true;
+            }
+        }
+
+        // This's necessary because 'DecayEntity' has extra debris logic not covered by the 'BaseCombatEntity' 'OnKilled' method.
         [HarmonyPatch(typeof(DecayEntity), "OnKilled")]
         public static class DecayEntity_OnKilled_Patch
         {

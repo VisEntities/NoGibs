@@ -34,6 +34,9 @@
     <Reference Include="0Harmony">
       <HintPath>..\References\Managed\0Harmony.dll</HintPath>
     </Reference>
+    <Reference Include="0Harmony_Original">
+      <HintPath>..\References\Managed\0Harmony_Original.dll</HintPath>
+    </Reference>
     <Reference Include="Assembly-CSharp">
       <HintPath>..\..\Plugins\References\Managed\Assembly-CSharp.dll</HintPath>
     </Reference>

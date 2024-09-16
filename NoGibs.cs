@@ -12,7 +12,7 @@ using System.Reflection.Emit;
 
 namespace Oxide.Plugins
 {
-    [Info("No Gibs", "VisEntities", "1.1.0")]
+    [Info("No Gibs", "VisEntities", "1.1.1")]
     [Description("Prevents debris from spawning when entities decay, are killed by admins, demolished, or collapsed due to instability.")]
     public class NoGibs : RustPlugin
     {
@@ -184,7 +184,7 @@ namespace Oxide.Plugins
             }
         }
 
-        // This's necessary because 'DecayEntity' has extra debris logic not covered by the 'BaseCombatEntity' 'OnKilled' method.
+        // This's necessary because 'DecayEntity' has extra debris logic not covered by the 'BaseCombatEntity.OnKilled' method.
         [HarmonyPatch(typeof(DecayEntity), "OnKilled")]
         public static class DecayEntity_OnKilled_Patch
         {
@@ -211,7 +211,7 @@ namespace Oxide.Plugins
                 {
                     if (codeInstructions[instructionIndex].opcode == OpCodes.Call && codeInstructions[instructionIndex].operand.Equals(methodKill))
                     {
-                        if (_config.DisableDebrisSpawnForStabilityCollapse)
+                        if (_config != null && _config.DisableDebrisSpawnForStabilityCollapse)
                             codeInstructions[instructionIndex - 1] = new CodeInstruction(OpCodes.Ldc_I4_0);
                     }
                 }

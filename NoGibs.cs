@@ -7,12 +7,13 @@
 using HarmonyLib;
 using Newtonsoft.Json;
 using Oxide.Core;
+using Oxide.Core.Plugins;
 using System.Collections.Generic;
 using System.Reflection.Emit;
 
 namespace Oxide.Plugins
 {
-    [Info("No Gibs", "VisEntities", "1.1.1")]
+    [Info("No Gibs", "VisEntities", "1.1.2")]
     [Description("Prevents debris from spawning when entities decay, are killed by admins, demolished, or collapsed due to instability.")]
     public class NoGibs : RustPlugin
     {
@@ -20,7 +21,6 @@ namespace Oxide.Plugins
 
         private static NoGibs _plugin;
         private static Configuration _config;
-        private Harmony _harmony;
 
         #endregion Fields
 
@@ -107,13 +107,10 @@ namespace Oxide.Plugins
         private void Init()
         {
             _plugin = this;
-            _harmony = new Harmony(Name + "PATCH");
-            _harmony.PatchAll();
         }
 
         private void Unload()
         {
-            _harmony.UnpatchAll(Name + "PATCH");
             _config = null;
             _plugin = null;
         }
@@ -170,6 +167,7 @@ namespace Oxide.Plugins
 
         #region Harmony Patches
 
+        [AutoPatch]
         [HarmonyPatch(typeof(BaseCombatEntity), "OnKilled")]
         public static class BaseCombatEntity_OnKilled_Patch
         {
@@ -185,6 +183,7 @@ namespace Oxide.Plugins
         }
 
         // This's necessary because 'DecayEntity' has extra debris logic not covered by the 'BaseCombatEntity.OnKilled' method.
+        [AutoPatch]
         [HarmonyPatch(typeof(DecayEntity), "OnKilled")]
         public static class DecayEntity_OnKilled_Patch
         {
@@ -199,6 +198,7 @@ namespace Oxide.Plugins
             }
         }
 
+        [AutoPatch]
         [HarmonyPatch(typeof(StabilityEntity), "StabilityCheck")]
         public static class StabilityEntity_StabilityCheck_Patch
         {
@@ -220,6 +220,7 @@ namespace Oxide.Plugins
             }
         }
 
+        [AutoPatch]
         [HarmonyPatch(typeof(BaseNetworkable), "AdminKill")]
         public static class BaseNetworkable_AdminKill_Patch
         {

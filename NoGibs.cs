@@ -13,7 +13,7 @@ using System.Reflection.Emit;
 
 namespace Oxide.Plugins
 {
-    [Info("No Gibs", "VisEntities", "1.1.2")]
+    [Info("No Gibs", "VisEntities", "1.1.3")]
     [Description("Prevents debris from spawning when entities decay, are killed by admins, demolished, or collapsed due to instability.")]
     public class NoGibs : RustPlugin
     {
@@ -139,7 +139,7 @@ namespace Oxide.Plugins
             return true;
         }
 
-        private object OnDecayEntityKilled(DecayEntity decayEntity)
+        private object OnDecayEntityDied(DecayEntity decayEntity)
         {
             if (decayEntity == null)
                 return null;
@@ -151,7 +151,7 @@ namespace Oxide.Plugins
             return true;
         }
 
-        private object OnBaseCombatEntityKilled(BaseCombatEntity baseCombatEntity, HitInfo info)
+        private object OnBaseCombatEntityDied(BaseCombatEntity baseCombatEntity, HitInfo info)
         {
             if (baseCombatEntity == null)
                 return null;
@@ -168,12 +168,12 @@ namespace Oxide.Plugins
         #region Harmony Patches
 
         [AutoPatch]
-        [HarmonyPatch(typeof(BaseCombatEntity), "OnKilled")]
-        public static class BaseCombatEntity_OnKilled_Patch
+        [HarmonyPatch(typeof(BaseCombatEntity), "OnDied")]
+        public static class BaseCombatEntity_OnDied_Patch
         {
             public static bool Prefix(BaseCombatEntity __instance, HitInfo info)
             {
-                if (Interface.CallHook("OnBaseCombatEntityKilled", __instance, info) != null)
+                if (Interface.CallHook("OnBaseCombatEntityDied", __instance, info) != null)
                 {
                     return false;
                 }
@@ -182,14 +182,14 @@ namespace Oxide.Plugins
             }
         }
 
-        // This's necessary because 'DecayEntity' has extra debris logic not covered by the 'BaseCombatEntity.OnKilled' method.
+        // This's necessary because 'DecayEntity' has extra debris logic not covered by the 'BaseCombatEntity.OnDied' method.
         [AutoPatch]
-        [HarmonyPatch(typeof(DecayEntity), "OnKilled")]
-        public static class DecayEntity_OnKilled_Patch
+        [HarmonyPatch(typeof(DecayEntity), "OnDied")]
+        public static class DecayEntity_OnDied_Patch
         {
             public static bool Prefix(DecayEntity __instance)
             {
-                if (Interface.CallHook("OnDecayEntityKilled", __instance) != null)
+                if (Interface.CallHook("OnDecayEntityDied", __instance) != null)
                 {
                     return false;
                 }
